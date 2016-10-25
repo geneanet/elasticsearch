@@ -25,6 +25,7 @@ import java.io.IOException;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.util.FrequencyTrackingRingBuffer;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 
 
 /**
@@ -137,6 +138,11 @@ public final class XUsageTrackingQueryCachingPolicy implements QueryCachingPolic
 
   @Override
   public boolean shouldCache(Query query, LeafReaderContext context) throws IOException {
+    if (query.getCacheOverridePolicy() == CacheOverridePolicy.MustCache) {
+        return true;
+    } else if (query.getCacheOverridePolicy() == CacheOverridePolicy.MustNotCache) {
+        return false;
+    }
     if (query instanceof MatchAllDocsQuery
         // MatchNoDocsQuery currently rewrites to a BooleanQuery,
         // but who knows, it might get its own Weight one day
