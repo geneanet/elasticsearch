@@ -60,7 +60,6 @@ import java.util.Map;
 
 public class QueryParseContext {
 
-    private static final ParseField CACHE = new ParseField("_cache").withAllDeprecated("Elasticsearch makes its own caching decisions");
     private static final ParseField CACHE_KEY = new ParseField("_cache_key").withAllDeprecated("Filters are always used as cache keys");
 
     private static ThreadLocal<String[]> typesContext = new ThreadLocal<>();
@@ -382,7 +381,7 @@ public class QueryParseContext {
      * Return whether the setting is deprecated.
      */
     public boolean isDeprecatedSetting(String setting) {
-        return parseFieldMatcher.match(setting, CACHE) || parseFieldMatcher.match(setting, CACHE_KEY);
+        return parseFieldMatcher.match(setting, CACHE_KEY);
     }
 
     public Version indexVersionCreated() {
