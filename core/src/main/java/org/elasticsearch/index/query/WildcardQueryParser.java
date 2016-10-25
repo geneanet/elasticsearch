@@ -21,6 +21,7 @@ package org.elasticsearch.index.query;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.inject.Inject;
@@ -59,6 +60,7 @@ public class WildcardQueryParser implements QueryParser {
 
         String value = null;
         float boost = 1.0f;
+        CacheOverridePolicy cacheOverridePolicy = CacheOverridePolicy.Auto;
         String queryName = null;
         token = parser.nextToken();
         if (token == XContentParser.Token.START_OBJECT) {
@@ -73,6 +75,8 @@ public class WildcardQueryParser implements QueryParser {
                         value = parser.text();
                     } else if ("boost".equals(currentFieldName)) {
                         boost = parser.floatValue();
+                    } else if ("_cache".equals(currentFieldName)) {
+                        cacheOverridePolicy = parser.booleanValue() ? CacheOverridePolicy.MustCache : CacheOverridePolicy.MustNotCache;
                     } else if ("rewrite".equals(currentFieldName)) {
                         rewriteMethod = parser.textOrNull();
                     } else if ("_name".equals(currentFieldName)) {
@@ -107,6 +111,7 @@ public class WildcardQueryParser implements QueryParser {
         if (queryName != null) {
             parseContext.addNamedQuery(queryName, wildcardQuery);
         }
+        wildcardQuery.setCacheOverridePolicy(cacheOverridePolicy);
         return wildcardQuery;
     }
 }

@@ -20,6 +20,7 @@
 package org.elasticsearch.index.query;
 
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 import org.apache.lucene.search.TermRangeQuery;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.inject.Inject;
@@ -63,6 +64,7 @@ public class RangeQueryParser implements QueryParser {
         DateTimeZone timeZone = null;
         DateMathParser forcedDateParser = null;
         float boost = 1.0f;
+        CacheOverridePolicy cacheOverridePolicy = CacheOverridePolicy.Auto;
         String queryName = null;
 
         String currentFieldName = null;
@@ -88,6 +90,8 @@ public class RangeQueryParser implements QueryParser {
                             includeUpper = parser.booleanValue();
                         } else if ("boost".equals(currentFieldName)) {
                             boost = parser.floatValue();
+                        } else if ("_cache".equals(currentFieldName)) {
+                            cacheOverridePolicy = parser.booleanValue() ? CacheOverridePolicy.MustCache : CacheOverridePolicy.MustNotCache;
                         } else if ("gt".equals(currentFieldName)) {
                             from = parser.objectBytes();
                             includeLower = false;
@@ -143,6 +147,7 @@ public class RangeQueryParser implements QueryParser {
         if (queryName != null) {
             parseContext.addNamedQuery(queryName, query);
         }
+        query.setCacheOverridePolicy(cacheOverridePolicy);
         return query;
     }
 }

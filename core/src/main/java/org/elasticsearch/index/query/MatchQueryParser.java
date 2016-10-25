@@ -23,6 +23,7 @@ import org.apache.lucene.queries.ExtendedCommonTermsQuery;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.lucene.search.Queries;
 import org.elasticsearch.common.unit.Fuzziness;
@@ -71,6 +72,7 @@ public class MatchQueryParser implements QueryParser {
 
         Object value = null;
         float boost = 1.0f;
+        CacheOverridePolicy cacheOverridePolicy = CacheOverridePolicy.Auto;
         MatchQuery matchQuery = new MatchQuery(parseContext);
         String minimumShouldMatch = null;
         String queryName = null;
@@ -103,6 +105,8 @@ public class MatchQueryParser implements QueryParser {
                         matchQuery.setAnalyzer(analyzer);
                     } else if ("boost".equals(currentFieldName)) {
                         boost = parser.floatValue();
+                    } else if ("_cache".equals(currentFieldName)) {
+                        cacheOverridePolicy = parser.booleanValue() ? CacheOverridePolicy.MustCache : CacheOverridePolicy.MustNotCache;
                     } else if ("slop".equals(currentFieldName) || "phrase_slop".equals(currentFieldName) || "phraseSlop".equals(currentFieldName)) {
                         matchQuery.setPhraseSlop(parser.intValue());
                     } else if (parseContext.parseFieldMatcher().match(currentFieldName, Fuzziness.FIELD)) {
@@ -182,6 +186,7 @@ public class MatchQueryParser implements QueryParser {
         if (queryName != null) {
             parseContext.addNamedQuery(queryName, query);
         }
+        query.setCacheOverridePolicy(cacheOverridePolicy);
         return query;
     }
 }

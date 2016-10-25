@@ -20,6 +20,7 @@
 package org.elasticsearch.index.query;
 
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 import org.apache.lucene.spatial.geopoint.document.GeoPointField;
 import org.apache.lucene.spatial.geopoint.search.GeoPointDistanceQuery;
 import org.elasticsearch.Version;
@@ -83,6 +84,7 @@ public class GeoDistanceQueryParser implements QueryParser {
         final boolean indexCreatedBeforeV2_2 = parseContext.indexVersionCreated().before(Version.V_2_2_0);
         boolean coerce = false;
         boolean ignoreMalformed = false;
+        CacheOverridePolicy cacheOverridePolicy = CacheOverridePolicy.Auto;
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
@@ -140,6 +142,8 @@ public class GeoDistanceQueryParser implements QueryParser {
                     }
                 } else if ("ignore_malformed".equals(currentFieldName) && coerce == false) {
                     ignoreMalformed = parser.booleanValue();
+                } else if ("_cache".equals(currentFieldName)) {
+                    cacheOverridePolicy = parser.booleanValue() ? CacheOverridePolicy.MustCache : CacheOverridePolicy.MustNotCache;
                 } else {
                     point.resetFromString(parser.text());
                     fieldName = currentFieldName;
@@ -196,6 +200,7 @@ public class GeoDistanceQueryParser implements QueryParser {
         if (queryName != null) {
             parseContext.addNamedQuery(queryName, query);
         }
+        query.setCacheOverridePolicy(cacheOverridePolicy);
         return query;
     }
 }

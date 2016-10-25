@@ -23,6 +23,7 @@ import com.google.common.collect.Iterables;
 
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.lucene.search.Queries;
@@ -60,6 +61,7 @@ public class IdsQueryParser implements QueryParser {
         Collection<String> types = null;
         String currentFieldName = null;
         float boost = 1.0f;
+        CacheOverridePolicy cacheOverridePolicy = CacheOverridePolicy.Auto;
         String queryName = null;
         XContentParser.Token token;
         boolean idsProvided = false;
@@ -99,6 +101,8 @@ public class IdsQueryParser implements QueryParser {
                     types = Collections.singletonList(parser.text());
                 } else if ("boost".equals(currentFieldName)) {
                     boost = parser.floatValue();
+                } else if ("_cache".equals(currentFieldName)) {
+                    cacheOverridePolicy = parser.booleanValue() ? CacheOverridePolicy.MustCache : CacheOverridePolicy.MustNotCache;
                 } else if ("_name".equals(currentFieldName)) {
                     queryName = parser.text();
                 } else {
@@ -126,6 +130,7 @@ public class IdsQueryParser implements QueryParser {
         if (queryName != null) {
             parseContext.addNamedQuery(queryName, query);
         }
+        query.setCacheOverridePolicy(cacheOverridePolicy);
         return query;
     }
 }

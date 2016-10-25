@@ -21,6 +21,7 @@ package org.elasticsearch.index.query;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 import org.apache.lucene.search.TermQuery;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.inject.Inject;
@@ -57,6 +58,7 @@ public class TermQueryParser implements QueryParser {
         String fieldName = null;
         Object value = null;
         float boost = 1.0f;
+        CacheOverridePolicy cacheOverridePolicy = CacheOverridePolicy.Auto;
         String currentFieldName = null;
         XContentParser.Token token;
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
@@ -82,6 +84,8 @@ public class TermQueryParser implements QueryParser {
                             queryName = parser.text();
                         } else if ("boost".equals(currentFieldName)) {
                             boost = parser.floatValue();
+                        } else if ("_cache".equals(currentFieldName)) {
+                            cacheOverridePolicy = parser.booleanValue() ? CacheOverridePolicy.MustCache : CacheOverridePolicy.MustNotCache;
                         } else {
                             throw new QueryParsingException(parseContext, "[term] query does not support [" + currentFieldName + "]");
                         }
@@ -120,6 +124,7 @@ public class TermQueryParser implements QueryParser {
         if (queryName != null) {
             parseContext.addNamedQuery(queryName, query);
         }
+        query.setCacheOverridePolicy(cacheOverridePolicy);
         return query;
     }
 }

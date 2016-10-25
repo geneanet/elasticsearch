@@ -23,6 +23,7 @@ import com.google.common.collect.Maps;
 
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.regex.Regex;
 import org.elasticsearch.common.unit.Fuzziness;
@@ -60,6 +61,7 @@ public class MultiMatchQueryParser implements QueryParser {
 
         Object value = null;
         float boost = 1.0f;
+        CacheOverridePolicy cacheOverridePolicy = CacheOverridePolicy.Auto;
         Float tieBreaker = null;
         MultiMatchQueryBuilder.Type type = null;
         MultiMatchQuery multiMatchQuery = new MultiMatchQuery(parseContext);
@@ -95,6 +97,8 @@ public class MultiMatchQueryParser implements QueryParser {
                     multiMatchQuery.setAnalyzer(analyzer);
                 } else if ("boost".equals(currentFieldName)) {
                     boost = parser.floatValue();
+                } else if ("_cache".equals(currentFieldName)) {
+                    cacheOverridePolicy = parser.booleanValue() ? CacheOverridePolicy.MustCache : CacheOverridePolicy.MustNotCache;
                 } else if ("slop".equals(currentFieldName) || "phrase_slop".equals(currentFieldName) || "phraseSlop".equals(currentFieldName)) {
                     multiMatchQuery.setPhraseSlop(parser.intValue());
                 } else if (parseContext.parseFieldMatcher().match(currentFieldName, Fuzziness.FIELD)) {
@@ -174,6 +178,7 @@ public class MultiMatchQueryParser implements QueryParser {
         if (queryName != null) {
             parseContext.addNamedQuery(queryName, query);
         }
+        query.setCacheOverridePolicy(cacheOverridePolicy);
         return query;
     }
 

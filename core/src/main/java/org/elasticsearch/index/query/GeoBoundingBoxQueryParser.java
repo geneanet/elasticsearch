@@ -20,6 +20,7 @@
 package org.elasticsearch.index.query;
 
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 import org.apache.lucene.spatial.geopoint.document.GeoPointField;
 import org.apache.lucene.spatial.geopoint.search.GeoPointInBBoxQuery;
 import org.elasticsearch.ElasticsearchParseException;
@@ -86,6 +87,7 @@ public class GeoBoundingBoxQueryParser implements QueryParser {
         final boolean indexCreatedBeforeV2_0 = parseContext.indexVersionCreated().before(Version.V_2_0_0);
         boolean coerce = false;
         boolean ignoreMalformed = false;
+        CacheOverridePolicy cacheOverridePolicy = CacheOverridePolicy.Auto;
 
         GeoPoint sparse = new GeoPoint();
 
@@ -150,6 +152,8 @@ public class GeoBoundingBoxQueryParser implements QueryParser {
                     type = parser.text();
                 } else if ("ignore_malformed".equals(currentFieldName) && coerce == false) {
                     ignoreMalformed = parser.booleanValue();
+                } else if ("_cache".equals(currentFieldName)) {
+                    cacheOverridePolicy = parser.booleanValue() ? CacheOverridePolicy.MustCache : CacheOverridePolicy.MustNotCache;
                 } else {
                     throw new QueryParsingException(parseContext, "failed to parse [{}] query. unexpected field [{}]", NAME, currentFieldName);
                 }
@@ -224,6 +228,7 @@ public class GeoBoundingBoxQueryParser implements QueryParser {
         if (queryName != null) {
             parseContext.addNamedQuery(queryName, query);
         }
+        query.setCacheOverridePolicy(cacheOverridePolicy);
         return query;
     }
 }

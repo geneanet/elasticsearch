@@ -23,6 +23,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.lucene.BytesRefs;
@@ -60,6 +61,7 @@ public class PrefixQueryParser implements QueryParser {
 
         String value = null;
         float boost = 1.0f;
+        CacheOverridePolicy cacheOverridePolicy = CacheOverridePolicy.Auto;
         String currentFieldName = null;
         XContentParser.Token token;
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
@@ -79,6 +81,8 @@ public class PrefixQueryParser implements QueryParser {
                             value = parser.textOrNull();
                         } else if ("boost".equals(currentFieldName)) {
                             boost = parser.floatValue();
+                        } else if ("_cache".equals(currentFieldName)) {
+                            cacheOverridePolicy = parser.booleanValue() ? CacheOverridePolicy.MustCache : CacheOverridePolicy.MustNotCache;
                         } else if ("rewrite".equals(currentFieldName)) {
                             rewriteMethod = parser.textOrNull();
                         } else {
@@ -118,6 +122,7 @@ public class PrefixQueryParser implements QueryParser {
         if (queryName != null) {
             parseContext.addNamedQuery(queryName, query);
         }
+        query.setCacheOverridePolicy(cacheOverridePolicy);
         return  query;
     }
 }

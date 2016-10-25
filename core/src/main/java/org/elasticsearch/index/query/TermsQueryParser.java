@@ -24,6 +24,7 @@ import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.action.get.GetRequest;
@@ -88,6 +89,7 @@ public class TermsQueryParser implements QueryParser {
         List<Object> terms = new ArrayList<>();
         String fieldName = null;
         float boost = 1f;
+        CacheOverridePolicy cacheOverridePolicy = CacheOverridePolicy.Auto;
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
@@ -147,6 +149,8 @@ public class TermsQueryParser implements QueryParser {
                     minShouldMatch = parser.textOrNull();
                 } else if ("boost".equals(currentFieldName)) {
                     boost = parser.floatValue();
+                } else if ("_cache".equals(currentFieldName)) {
+                    cacheOverridePolicy = parser.booleanValue() ? CacheOverridePolicy.MustCache : CacheOverridePolicy.MustNotCache;
                 } else if (parseContext.parseFieldMatcher().match(currentFieldName, DISABLE_COORD_FIELD)) {
                     disableCoord = parser.booleanValue();
                 } else if ("_name".equals(currentFieldName)) {
@@ -209,6 +213,7 @@ public class TermsQueryParser implements QueryParser {
         if (queryName != null) {
             parseContext.addNamedQuery(queryName, query);
         }
+        query.setCacheOverridePolicy(cacheOverridePolicy);
         return query;
     }
 }

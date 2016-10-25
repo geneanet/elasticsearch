@@ -22,6 +22,7 @@ package org.elasticsearch.index.query;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.util.automaton.Operations;
 import org.elasticsearch.common.ParseField;
@@ -62,6 +63,7 @@ public class RegexpQueryParser implements QueryParser {
 
         String value = null;
         float boost = 1.0f;
+        CacheOverridePolicy cacheOverridePolicy = CacheOverridePolicy.Auto;
         int flagsValue = DEFAULT_FLAGS_VALUE;
         int maxDeterminizedStates = Operations.DEFAULT_MAX_DETERMINIZED_STATES;
         String queryName = null;
@@ -82,6 +84,8 @@ public class RegexpQueryParser implements QueryParser {
                             value = parser.textOrNull();
                         } else if ("boost".equals(currentFieldName)) {
                             boost = parser.floatValue();
+                        } else if ("_cache".equals(currentFieldName)) {
+                            cacheOverridePolicy = parser.booleanValue() ? CacheOverridePolicy.MustCache : CacheOverridePolicy.MustNotCache;
                         } else if ("rewrite".equals(currentFieldName)) {
                             rewriteMethod = parser.textOrNull();
                         } else if ("flags".equals(currentFieldName)) {
@@ -130,6 +134,7 @@ public class RegexpQueryParser implements QueryParser {
         if (queryName != null) {
             parseContext.addNamedQuery(queryName, query);
         }
+        query.setCacheOverridePolicy(cacheOverridePolicy);
         return query;
     }
 

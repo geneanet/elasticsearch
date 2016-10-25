@@ -21,6 +21,7 @@ package org.elasticsearch.index.query;
 
 import org.apache.lucene.search.ConstantScoreQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Query.CacheOverridePolicy;
 import org.apache.lucene.search.join.ScoreMode;
 import org.apache.lucene.search.join.ToParentBlockJoinQuery;
 import org.elasticsearch.common.Nullable;
@@ -59,6 +60,7 @@ public class NestedQueryParser implements QueryParser {
         final ToBlockJoinQueryBuilder builder = new ToBlockJoinQueryBuilder(parseContext);
 
         float boost = 1.0f;
+        CacheOverridePolicy cacheOverridePolicy = CacheOverridePolicy.Auto;
         ScoreMode scoreMode = ScoreMode.Avg;
         String queryName = null;
 
@@ -82,6 +84,8 @@ public class NestedQueryParser implements QueryParser {
                     builder.setPath(parser.text());
                 } else if ("boost".equals(currentFieldName)) {
                     boost = parser.floatValue();
+                } else if ("_cache".equals(currentFieldName)) {
+                    cacheOverridePolicy = parser.booleanValue() ? CacheOverridePolicy.MustCache : CacheOverridePolicy.MustNotCache;
                 } else if ("score_mode".equals(currentFieldName) || "scoreMode".equals(currentFieldName)) {
                     String sScoreMode = parser.text();
                     if ("avg".equals(sScoreMode)) {
@@ -113,6 +117,7 @@ public class NestedQueryParser implements QueryParser {
                 parseContext.addNamedQuery(queryName, joinQuery);
             }
         }
+        joinQuery.setCacheOverridePolicy(cacheOverridePolicy);
         return joinQuery;
     }
 
