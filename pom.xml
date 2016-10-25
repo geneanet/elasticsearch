@@ -161,6 +161,10 @@
             <url>https://download.elasticsearch.org/lucenesnapshots/${lucene.snapshot.revision}</url>
         </repository>
         -->
+        <repository>
+            <id>Lucene custom build</id>
+            <url>file:///home/herve/git/lucene-solr/lucene</url>
+        </repository>
     </repositories>
 
     <dependencyManagement>
